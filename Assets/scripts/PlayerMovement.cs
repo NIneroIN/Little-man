@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    Rigidbody2D _rg;
+    Rigidbody2D _rb;
 
     float horizontal;
     float vertical;
@@ -27,12 +27,14 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         speedPlayer = speedDefault;
-        _rg = GetComponent<Rigidbody2D>();
+        _rb = GetComponent<Rigidbody2D>();
     }
 
     private void Update()
     {
         GetObject();
+        CheckingGround();
+        Jump();
     }
 
     // Update is called once per frame
@@ -116,5 +118,34 @@ public class PlayerMovement : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(transform.position, transform.position + Vector3.right * transform.localScale.x * 2f);
+    }
+
+    public float jumpForce = 7f;
+
+    public bool onGround;
+    public Transform GroundCheck;
+    public float checkRadius = 0.4f;
+    public LayerMask Ground;
+    void Jump()
+    {
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            Physics2D.IgnoreLayerCollision(7, 8, true);
+            Invoke("IgnorelayerOff", 2f);
+        }
+        if (Input.GetKeyDown(KeyCode.Space) && onGround)
+        {
+            _rb.velocity = new Vector2(_rb.velocity.x, jumpForce);
+        }
+    }
+
+    void IgnorelayerOff()
+    {
+        Physics2D.IgnoreLayerCollision(7, 8, false);
+    }
+
+    void CheckingGround()
+    {
+        onGround = Physics2D.OverlapCircle(GroundCheck.position, checkRadius, Ground);
     }
 }
