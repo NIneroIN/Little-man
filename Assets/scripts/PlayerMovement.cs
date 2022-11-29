@@ -35,6 +35,7 @@ public class PlayerMovement : MonoBehaviour
         GetObject();
         CheckingGround();
         Jump();
+        CheckWall();
     }
 
     // Update is called once per frame
@@ -43,6 +44,7 @@ public class PlayerMovement : MonoBehaviour
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
         MovePlayer();
+        CheckLedge();
     }
 
     void MovePlayer()
@@ -114,12 +116,6 @@ public class PlayerMovement : MonoBehaviour
         speedPlayer = speedDefault;
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.right * transform.localScale.x * 2f);
-    }
-
     public float jumpForce = 7f;
 
     public bool onGround;
@@ -147,5 +143,81 @@ public class PlayerMovement : MonoBehaviour
     void CheckingGround()
     {
         onGround = Physics2D.OverlapCircle(GroundCheck.position, checkRadius, Ground);
+    }
+
+    [Header("Карабканье")]
+    public LayerMask Wall;
+    public Transform WallCheckUp;
+    public bool OnWallUp;
+    public float WallCheckRayDistance = 1f;
+    public bool OnLedge;
+    public float LedgeRayCorrectY = 0.5f;
+
+    void CheckWall()
+    {
+        OnWallUp = Physics2D.Raycast(WallCheckUp.position, new Vector2(transform.localScale.x, 0), WallCheckRayDistance, Wall);
+
+        
+    }
+
+    void CheckLedge()
+    {
+        if (OnWallUp)
+        {
+            OnLedge = !Physics2D.Raycast
+                (
+                    new Vector2(WallCheckUp.position.x, WallCheckUp.position.y + LedgeRayCorrectY),
+                    new Vector2(transform.localScale.x, 0),
+                    WallCheckRayDistance,
+                    Wall
+                );
+        }
+        else
+        {
+            OnLedge = false;
+        }
+
+        if (OnLedge)
+        {
+            OffsetCulculateAndCurrect();
+        }
+    }
+
+    public float OffsetY;
+
+    void OffsetCulculateAndCurrect()
+    {
+        OffsetY = Physics2D.Raycast
+            (
+                new Vector2(WallCheckUp.position.x + WallCheckRayDistance * transform.localScale.x, WallCheckUp.position.y + LedgeRayCorrectY),
+                Vector2.down,
+                LedgeRayCorrectY,
+                Ground
+            ).distance;
+
+        transform.position = new Vector3(transform.position.x, transform.position.y - OffsetY + 0.01f, transform.position.z);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(transform.position, transform.position + Vector3.right * transform.localScale.x * 2f);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(WallCheckUp.position, new Vector2(WallCheckUp.position.x + WallCheckRayDistance * transform.localScale.x, WallCheckUp.position.y));
+
+        Gizmos.color = Color.black;
+        Gizmos.DrawLine
+            (
+                new Vector2(WallCheckUp.position.x, WallCheckUp.position.y + LedgeRayCorrectY), 
+                new Vector2(WallCheckUp.position.x + WallCheckRayDistance * transform.localScale.x, WallCheckUp.position.y + LedgeRayCorrectY)
+            );
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine
+            (
+                new Vector2(WallCheckUp.position.x + WallCheckRayDistance * transform.localScale.x, WallCheckUp.position.y + LedgeRayCorrectY),
+                new Vector2(WallCheckUp.position.x + WallCheckRayDistance * transform.localScale.x, WallCheckUp.position.y)
+            );
     }
 }
